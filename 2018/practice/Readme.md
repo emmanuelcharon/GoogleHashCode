@@ -1,4 +1,4 @@
-This code solves the Google HashCode practice exercise of 2018: the pizza cutter.
+# HashCode 2018 Practice: Pizza Cutter.
 
 The code is in file *practice2018.py* .
 
