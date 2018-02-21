@@ -63,7 +63,7 @@ Of course, I had more time and less stress than they had during the actual compe
 Note: instead of counting the number of routers on each cell, I saved a set of routers.
 I figured it did not hurt my RAM too much and that it could be useful later.
 
-## Phase 2: Improvements
+## Phase 2: Improvement Ideas
 
 Now looking back at the results in the table of phase 1:
 
