@@ -30,7 +30,7 @@ So I went directly for a random approach, see the *solve* function:
 
 The goal here is to try as many random options as possible: speed is of the essence.
 So I tried to use numpy as much as possible, especially the numpy array slices,
-cf [https://docs.scipy.org/doc/numpy-1.13.0/reference/arrays.indexing.html].
+cf https://docs.scipy.org/doc/numpy-1.13.0/reference/arrays.indexing.html .
 
 We need to remember for each cell the slice it belongs to, and to be able to quickly look them up.
 So I used a numpy array of integers for that, and I made a "hash" function to represent each slice
@@ -41,7 +41,7 @@ and I could launch the computation. It still requires a lot of time. The scores 
 of computation using a single CPU of my Macbook Pro and about 1GB of RAM.
 
 Another option could have been to create a custom numpy dtype for a slice, more info here:
-[https://docs.scipy.org/doc/numpy-1.13.0/reference/arrays.dtypes.html] .
+https://docs.scipy.org/doc/numpy-1.13.0/reference/arrays.dtypes.html .
 
 ## Takeaways:
 

@@ -1,6 +1,6 @@
 A repository for code related to Google HashCode challenges.
 
-See [https://hashcode.withgoogle.com/past_editions.html] .
+See https://hashcode.withgoogle.com/past_editions.html.
 
 Each problem is in a separate folder organised by year.
 
@@ -13,4 +13,4 @@ source env/bin/activate
 pip3 install -r requirements.txt
 ```
 
-If you want to reach out, feel free to reach me on LinkedIn: [https://www.linkedin.com/in/emmanuel-charon-03725357/] .
+If you want to reach out, feel free to reach me on LinkedIn: https://www.linkedin.com/in/emmanuel-charon-03725357/ .
