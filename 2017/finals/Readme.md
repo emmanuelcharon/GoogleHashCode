@@ -1,6 +1,6 @@
 # HashCode 2017 Finals: Router placement.
 
-Code is in `final2017.py`.
+Code is in `finals2017.py`.
 
 The code here reaches a score of ~**549.46M**.
 It computes solutions in less than 5 minutes but uses a lot of caching: you can expect about 4.5GB RAM
