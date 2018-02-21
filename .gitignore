@@ -1,7 +1,8 @@
 # Compiled source #
 ###################
 *.pyc
-env/  # the python virtual environment
+env/  # the potential python virtual environments
+venv/
 
 # Packages #
 ############

@@ -3,7 +3,7 @@ A repository for code related to Google HashCode challenges.
 It is using python 3 with a virtual environment. Your can generate it with the command line or in your IDE (like PyCharm).
 
 ```
-python3 -m venv env
+virtualenv env -p {path to a python 3 installation}
 source env/bin/activate
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
