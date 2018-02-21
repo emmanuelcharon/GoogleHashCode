@@ -20,10 +20,14 @@ I did not have a good intuition for how to find good slices among all possible s
 So I went directly for a random approach, see the *solve* function:
 
 * randomly select a legal pizza slice
+
 ..* must have enough mushrooms, tomatoes, and not too big
 ..* here we select a size first, then a spot in the pizza
+
 * compute the score gain if we put it
+
 ..* we count the loss of score when removing slices which take any cell on the new slice's spot.
+
 * if we gain something, we perform the operation
 
 ## Implementation
