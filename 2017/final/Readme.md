@@ -37,6 +37,8 @@ I tried to make this function stay "local", so I go in circles around the cell, 
 * we call this function only on cells around a new router (except initially), so we know a backbone is not too far
 * initially, when no backbone cell is added, we shortcut to the unique backbone cell (see variable `building.initialState`)
 
+Note: before the `building.initialState`, I simply computed the initial gains for a sparse grid of cells. 
+
 Another operation is to find the backbones cells to add when we decided where we will add the next router.
 My function is very simple: it finds the closest backbone cell and then finds a **path going in diagonal first**.
 
