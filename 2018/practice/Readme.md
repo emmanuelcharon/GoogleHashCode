@@ -4,11 +4,11 @@ The code is in file *practice2018.py* .
 
 The problem statement, input and output files are joined. The scores for the output files are:
 
-|       | example  | small | medium | big     |
-| ----- | -------- | ----- | ------ | ------- |
-| bound | 15       |    42 |  50000 | 1000000 |
-| tomato proportion | 0.2  |    0.43 |  0.50 | 0.50 |
-| score | 8        |    30 |  44100 | 762871  |
+|                   | example  | small | medium | big     |
+| ----------------- | -------- | ----- | ------ | ------- |
+| bound             | 15       |    42 |  50000 | 1000000 |
+| tomato proportion | 0.2      |  0.43 |  0.50  | 0.50    |
+| score             | 8        |    30 |  44100 | 762871  |
 
 
 The total score without counting the example is 807001. The program can read solutions to the problem and improve
