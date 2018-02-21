@@ -37,10 +37,11 @@ I tried to make this function stay "local", so I go in circles around the cell, 
 * we call this function only on cells around a new router (except initially), so we know a backbone is not too far
 * initially, when no backbone cell is added, we shortcut to the unique backbone cell (see variable `building.initialState`)
 
-Note: before the `building.initialState`, I simply computed the initial gains for a sparse grid of cells. 
+Note: before implementing the `building.initialState` trick, I simply computed the initial gains for a sparse grid of cells.
 
 Another operation is to find the backbones cells to add when we decided where we will add the next router.
-My function is very simple: it finds the closest backbone cell and then finds a **path going in diagonal first**.
+My function is very simple: it finds the closest backbone cell and then finds a **path going in diagonal first**,
+staring from the backbone cell.
 
 The results for the greedy (but carefully implemented) approach are:
 
@@ -73,21 +74,24 @@ Now looking back at the results in the table of phase 1:
 
 **How could we improve our score?**
 
-The best options seems to improve target coverage on the `opera` and `rue_de_londres` examples.
+First, once in a while, we can re-compute the actual `gains` for all cells. This may improve our score.
+
+
+The best other option seems to improve target coverage on the `opera` and `rue_de_londres` examples.
 We may find some more points if we remove some routers that have become useless,
 or which removal would us cost the least score. And then we could use the freed budget for more routers.
 
 
 We used a greedy approach and we are most likely stuck in a local optimum. So in order to find more solutions,
-we can destroy routers and find other approaches. If we destroy one router the greedily optimize,
+we can destroy routers and find other cells to put them. If we destroy one router and then greedily optimize,
 we will obtain little gains because we will stay close to the existing solution. Instead,
 we could **remove many routers simultaneously, before greedily optimising again**.
 
 Here are the steps we would need to implement this approach:
 
-* once in a while, re-compute the actual `gains` for all cells
 * write a function to remove a router
-  * also remove corresponding backbones that were necessary for this router
+  * also remove corresponding backbones that were necessary only for this router
+  (basically remove them until we touch an intersection of the backbones)
   * update local `gains`
   * must update all cached values
 * maybe code a function to compute the score lost by removing a router
