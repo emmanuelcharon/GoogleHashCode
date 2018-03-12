@@ -439,7 +439,7 @@ def main(solve = True, start_from_existing_solution = True, optimize_steps = 0):
       print("read solution with {} slices and score is {}".format(len(pizza.slices), pizza.score))
   
     if solve:
-    pizza.solve_greedy(optimize_steps=optimize_steps)
+      pizza.solve_greedy(optimize_steps=optimize_steps)
     
     print("{}: solution has {} slices and score is {}/{}".format(
       sample, len(pizza.slices), pizza.score, pizza.R*pizza.C))
@@ -460,5 +460,6 @@ def main(solve = True, start_from_existing_solution = True, optimize_steps = 0):
   
 if __name__ == "__main__":
   random.seed(17) # reproducibility
-  main(start_from_existing_solution=False, optimize_steps=0)
+  # main(solve=True, start_from_existing_solution=False, optimize_steps=0)  # compute solutions
+  main(solve=False, start_from_existing_solution=True, optimize_steps=0) # read solutions
   
