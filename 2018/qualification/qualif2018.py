@@ -22,6 +22,7 @@ def read_problem(input_file_path):
   
   return problem
 
+
 def write_solution(problem, output_file_path):
   with open(output_file_path, 'w') as f:
     for car in problem.cars:
@@ -29,6 +30,53 @@ def write_solution(problem, output_file_path):
 
 def distance(point_a, point_b):
   return abs(point_a[0] - point_b[0]) + abs(point_a[1] - point_b[1])
+
+
+class Ride:
+  def __init__(self, ID, a, b, x, y, s, f):
+    self.ID = ID
+    self.start = [a, b]
+    self.end = [x, y]
+    self.earliest_start = s
+    self.latest_finish = f
+    self.length = distance(self.end, self.start)
+    
+    self.earliest_start_possible = max(self.earliest_start, distance([0, 0], self.start))
+    self.potential_car = None
+
+
+class Car:
+  def __init__(self, ID):
+    self.ID = ID
+    self.rides = list()
+    
+    self.time_next_available = 0
+    self.position_next_available = [0, 0]
+    
+    self.potential_rides = set()
+  
+  def add_ride(self, ride, end_time):
+    self.rides.append(ride)
+    
+    self.time_next_available = end_time
+    self.position_next_available = ride.end
+  
+  def time_and_pos_next_available(self):
+    return [self.time_next_available, self.position_next_available]
+
+
+class Assignment:
+  def __init__(self, ride, car, start_time, end_time, initial_distance, gain, ranking_score):
+    self.ride = ride
+    self.car = car
+    
+    self.start_time = start_time
+    self.end_time = end_time
+    self.initial_distance = initial_distance
+    self.gain = gain
+    
+    self.ranking_score = ranking_score
+
 
 class Problem:
   
@@ -41,7 +89,7 @@ class Problem:
     self.T = T
 
     self.cars = [Car(i) for i in range(0, F)]
-    self.rides = list()
+    self.rides = list() # are added after init
     
     self.score = 0
   
@@ -65,7 +113,6 @@ class Problem:
       if len(remaining_rides) % max(1, int(self.N/100)) == 0:
         print("remaining rides: {}/{}, score: {}".format(len(remaining_rides), self.N, self.score))
 
-      # re-sort remaining rides
       earliest_start_ride = None
       earliest_start_time = self.T
       
@@ -148,52 +195,6 @@ class Problem:
 
     return [best_time, best_car]
 
-class Assignment:
-  def __init__(self, ride, car, start_time, end_time, initial_distance, gain, ranking_score):
-    self.ride = ride
-    self.car = car
-    
-    self.start_time = start_time
-    self.end_time = end_time
-    self.initial_distance = initial_distance
-    self.gain = gain
-    
-    self.ranking_score = ranking_score
-    
-class Ride:
-  def __init__(self, ID, a, b, x, y, s, f):
-    self.ID = ID
-    self.start = [a, b]
-    self.end = [x, y]
-    self.earliest_start = s
-    self.latest_finish = f
-    self.length = distance(self.end, self.start)
-  
-  
-    self.earliest_start_possible = max(self.earliest_start, distance([0, 0], self.start))
-    self.potential_car = None # should be the first car
-
-class Car:
-  def __init__(self, ID):
-    self.ID = ID
-    self.rides = list()
-  
-    self.time_next_available = 0
-    self.position_next_available = [0, 0]
-    
-    self.potential_rides = set()
-    
-  def add_ride(self, ride, end_time):
-    self.rides.append(ride)
-    
-    self.time_next_available = end_time
-    self.position_next_available = ride.end
-  
-  def time_and_pos_next_available(self):
-    return [self.time_next_available, self.position_next_available]
-  
-  #def is_available(self, t):
-  #  return t >= self.time_next_available
     
 def main():
   dir_path = os.path.dirname(os.path.realpath(__file__))
