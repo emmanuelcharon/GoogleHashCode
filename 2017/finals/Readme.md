@@ -74,7 +74,8 @@ Now looking back at the results in the table of phase 1:
 
 **How could we improve our score?**
 
-First, once in a while, we can re-compute the actual `gains` for all cells. This may improve our score.
+First, once in a while, we can re-compute the actual `gains` for all cells - remember that what we cache are
+approximations. This may improve our score.
 
 
 The best other option seems to improve target coverage on the `opera` and `rue_de_londres` examples.
@@ -93,7 +94,7 @@ Here are the steps we would need to implement this approach:
   * also remove corresponding backbones that were necessary only for this router
   (basically remove them until we touch an intersection of the backbones)
   * update local `gains`
-  * must update all cached values
+  * must be careful to update all affected cached values
 * maybe code a function to compute the score lost by removing a router
 * when the optimisation step gives 0 improvement, destroy many servers simultaneously
   * for instance 10% of routers randomly selected
