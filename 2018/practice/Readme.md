@@ -7,46 +7,42 @@ The problem statement, input and output files are joined. The scores for the out
 |                   | example  | small | medium | big     |
 | ----------------- | -------- | ----- | ------ | ------- |
 | bound             | 15       |    42 |  50000 | 1000000 |
-| tomato proportion | 0.2      |  0.43 |  0.50  | 0.50    |
-| score             | 8        |    30 |  44100 | 762871  |
+| tomato proportion | 0.8      |  0.57 |  0.50  | 0.50    |
+| number of slices  | 2        |     7 |  4106  | 63694   |
+| score             | 12       |    35 |  49255 | 891638  |
 
 
-The total score without counting the example is 807001. The program can read solutions to the problem and improve
-them greedily (but slowly).
+The total score without counting the example is **940928**. The program can read solutions to the problem and improve
+them greedily (but not a lot).
 
 ## Algorithm
 
-I did not have a good intuition for how to find good slices among all possible slices in a reasonable amount of time.
-So I went directly for a random approach, see the *solve* function:
+I call "potential slice" a legal slice we could put given existing slices (respects all conditions of size and availability).
 
-* randomly select a legal pizza slice
-  * must have enough mushrooms, tomatoes, and not too big
-  * here we select a size first, then a spot in the pizza
-* compute the score gain if we put it
-  * we count the loss of score when removing slices which take any cell on the new slice's spot.
-* if we gain something, we perform the operation
+The greedy solution I found is the following: for each cell, compute a "maximum area" potential slice to add,
+where the cell is the top left corner of the potential slice.
 
-## Implementation
+Then, at each step, we take the maximum potential slice among  all cells and we add it.
 
-The goal here is to try as many random options as possible: speed is of the essence.
-So I tried to use numpy as much as possible, especially the numpy array slices,
-cf https://docs.scipy.org/doc/numpy-1.13.0/reference/arrays.indexing.html .
+The algorithm is very simple but the difficulty is in the fast implementation details: every-time we add a slice,
+we don't want to recompute the best potential slice for each cell of the pizza. We can restrict updates to cells
+affected by the new slice. See the *potential_slices_now_illegal* and the *cells_affected* variables in the *solve* function.
 
-We need to remember for each cell the slice it belongs to, and to be able to quickly look them up.
-So I used a numpy array of integers for that, and I made a "hash" function to represent each slice
-uniquely as an integer given the total proportions of the pizza. See the * __hash__ * function of a slice.
+When we compute the best potential slice for each cell, in many cases there are several options possible, c.f.
+function *best_slice_for_cell* .
+For faster runtime, we select the first one we find and we do an early termination when a potential slice of size H is found.
 
-After that, it was quick to compute the score lost and the score gained by adding a slice,
-and I could launch the computation. It still requires a lot of time. The scores given correspond to about 30min
-of computation using a single CPU of my Macbook Pro and about 1GB of RAM.
+## Variations and improvements:
 
-Another option could have been to create a custom numpy dtype for a slice, more info here:
-https://docs.scipy.org/doc/numpy-1.13.0/reference/arrays.dtypes.html .
+At first I had started with a completely random approach: add slices 1 by 1 if they improve the score,
+removing slices in their way if necessary. This led to 750K to 820K scores and was not a good method to solve this problem.
 
-## Takeaways:
+I then implemented the greedy algorithm described above.
+In the first version of the code I went through potential slices starting with the 1-row slices.
+This led to create a solution with a lot of horizontal slices.
+I tried with other configurations, prioritizing vertical slices, square slices and selecting in random order,
+but this did not affect the score significantly.
 
-There are plenty of useful numpy functions for many operations, here I discovered: numpy slices, np.count_nonzeros,
-np.unique, np.all, np.any.
+I also added a way to optimize on the existing solution: destroy slices in an area of the pizza (like a quarter of the pizza)
+an rebuild ones with the greedy optimizer. This did not give significant score improvements either.
 
-One trick that helped a lot: I performed the replacement of the slice even if the score gain was 0.
-This allowed to cover a larger space of solutions and led to a significant improvement in the scores.

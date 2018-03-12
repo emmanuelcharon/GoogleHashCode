@@ -386,8 +386,8 @@ def main():
     
     building = read_building(input_file_path)
     print(building)
-    read_solution(building, output_file_path)
-    #solve(building)
+    #read_solution(building, output_file_path)
+    solve(building)
     
     print(" backbone cells: {},\n routers: {},\n targets covered: {}/{},\n "
           "targets covered twice or more: {},\n remaining budget {}/{},\n score: {}\n".format(
