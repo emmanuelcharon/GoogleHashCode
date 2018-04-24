@@ -6,15 +6,18 @@ I set out to work on this problem to improve my programming and algorithmic skil
 
 One of my main motivations is to get better at solving these integer programming problems. I do love the hashcode competition, because I like this type of problem and because of the short timeframe given to solve them. This allows to participate without sacrificing too much time. I've participated in a few Kaggle contests, but my experience is that the score difference between top performing teams is so thin that the final ranking is quite random, for algorithms which perform evenly (machine learning is statistical after all).
 
-## I - Greedy approach with basic random exploration:
+## I. Greedy approach with basic random exploration
 
 In a limited time frame such as a few hours or one day, it is rare to be able to formulate the problem in rigorous terms and to find an optimal or provably good solution to a problem. So I started out with just common sense, and tried to come up with a good greedy solution to the problem.
 
-### A- Greedy Idea
+### I.A. Greedy Idea
 
-Here is a very simple greedy approach idea: for each potential router cell in the grid, compute the score gain if we added a router to it (and the backbone to connect it to the backbone). Choose the potential router cell with the best gain, add the corresponding backbone cells and router. Repeat this until we cannot add any router or until no router addition improves the score.
+Here is a very simple greedy approach idea:
+* For each potential router cell in the grid compute the score gain if we added a router to it (and the cost to connect it to the backbone).
+* Choose the potential router cell with the best gain, add the corresponding backbone cells and router.
+* Repeat this until we cannot add any router or until no router addition improves the score.
 
-B- Implementation
+### I.B. Implementation
 
 In order to implement this idea, we need to be able to:
 * read the problem statement
@@ -31,7 +34,7 @@ In this problem, one can see that adding a router on a cell only has an impact f
 
 One thing that accelerated the program a lot was to cache, for each potential router cell A, the set of targets that would be covered if a router was placed on A. You can also see in the code a naive O(R^4) and a linear programming approach O(R^2) to compute this set for each cell.
 
-C- Variation and random improvements:
+### I.C. Variation and random improvements
 
 There are always possible variations on greedy methods, and in this case, we can for instance think of a way differentiate 2 router candidates that have the same score.
 I added a simple variation, which is to thake the router with maximum gain per budget used instead of simply the candidate with the best gain. This led to minor score improvements but selected solutions with more routers.
@@ -48,7 +51,7 @@ This approach has the advantage of exploring the set of solutions varying all pa
 
 Remark that sometimes, the remaining budget goes below 0, because the distance to backbone is approximate. This usually does not last long and the solutions become legal again after a few iterations.
 
-D- Analysing results:
+### I.D. Analysing results
 
 The results for the greedy (but carefully implemented and using ) approach are:
 
@@ -85,7 +88,7 @@ Note that:
 
 Note that the greedy algorithm with random improvements is a generic meta-heuristic and can be applied to many different problems.
 
-E - Bonus: Running a lot more random improvements using multi-processing
+### I.E. Bonus: Running a lot more random improvements using multi-processing
 
 One can follow the greedy algorithm with random improvements and obtain better scores: it jsut requires to trying a lot more combinations and adjust the number of routers removed. More optimised code can use multi-processing (multi-threading is not usefull here since the bottleneck is the CPU), use GPU computations, or simply be faster depending on the programming language and implementation optimizations.
 
@@ -97,9 +100,9 @@ In order to multi-process the random improvements, we could:
 - when a process finds a better solution, it can save it
 - catch any concurrency read/write exception (which should be rarer and rarer when the score improves) inside the loop
 
-## II - Maximum coverage problem and Steiner trees:
+## II. Maximum coverage problem and Steiner trees:
 
-### II.A - Problem decomposition
+### II.A. Problem decomposition
 
 Lets try and solve the problem with a different method. Consider this sub-problem, noted (A):
 
@@ -123,14 +126,14 @@ The advantage of dividing our problem into (A1) and (A2) is that the new sub-pro
 
 (A2) is called the *Steiner Tree problem*, https://en.wikipedia.org/wiki/Steiner_tree_problem .
 
-### II.B - Maximum Coverage Problem
+### II.B. Maximum Coverage Problem
 
 Coming soon.
 
-### II.C - Steiner tree with Chebyshev distance
+### II.C. Steiner tree with Chebyshev distance
 
 Coming soon.
 
-### II.D - Results
+### II.D. Results
 
 Coming soon.
