@@ -155,8 +155,7 @@ Now, in order to solve (A), we can try to solve 2 sequential sub-problems:
 | ------------- |
 
 
-| (A2) Given the positions of N routers and the initial backbone cell, find a backbone tree that connects them
-minimizing the number of backbone cells created. |
+| (A2) Given the positions of N routers and the initial backbone cell, find a backbone tree that connects them minimizing the number of backbone cells created. |
 | ------------- |
 
 If we manage to find a backbone tree that costs less than B - Pr * N, then we found a legal solution to the problem.
