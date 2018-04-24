@@ -40,12 +40,12 @@ because the not-updated gains vary a bit compared to their true value.
 
 One thing that accelerated the program a lot was to cache, for each potential router cell A,
 the set of targets that would be covered if a router was placed on A.
-You can also see in the code a naive O(R^4) and a linear programming approach O(R^2) to compute this set for each cell.
+You can also see in the code a naive `O(R^4)` and a linear programming approach `O(R^2)` to compute this set for each cell.
 
 ### I.C. Variation and random improvements
 
 There are always possible variations on greedy methods, and in this case, we can for instance think of a way
-differentiate 2 router candidates that have the same score. I added a simple variation: take the router with
+to differentiate 2 router candidates that have the same score. I added a simple variation: take the router with
 maximum gain per budget used instead of simply the candidate with the best gain. This led to minor score improvements
  but selected solutions with more routers.
 
@@ -56,7 +56,7 @@ starting point to reconstruct a greedy solution. This allows to explore neighbor
  improve the score of the solution.
 
 This is applicable here: we will repeatedly remove about 10% of the routers (and associated backbones),
-and then add routers like in the simple greedy approach. See method: Greedy.greedy_solve_with_random_improvements.
+and then add routers like in the simple greedy approach. See method: `Greedy.greedy_solve_with_random_improvements`.
 
 In order to do so, we implemented methods to:
 * remove routers, remove backbones
@@ -70,13 +70,16 @@ This usually does not last long and the solutions become legal again after a few
 
 ### I.D. Analysing results
 
-The results for the greedy (but carefully implemented and using ) approach are:
+The results for our greedy (but carefully implemented) approach are:
 
 | Greedy                   | example  | charleston_road | opera          | rue_de_londres     |    lets_go_higher    |
 | -----                    | -------- | -----           | ------         | -------            | -----------          |
 | targets covered          | 54/66    | 21942/21942     |  171696/196899 | 57004/64426        | 288108/288108        |
 | score                    | 54 009   | 21 963 262      |  171 696 018     | 57 006 834       | 290 103 972          |
 | score in millions        | ~0.054M  | ~21.96M         |  ~171.70M      | ~57.01M            | ~290.10M             |
+
+Greedy approach total score: **540.77M**.
+
 
 The results for the greedy solution transformed with 20 to 100 loops of random improvements are:
 
@@ -86,10 +89,12 @@ The results for the greedy solution transformed with 20 to 100 loops of random i
 | score                    | 54 009   | 21 962 554      |  173 018 079   | 58 988 015         | 290 194 257          |
 | score in millions        | 0        | ~21.96M         |  ~173.02M      | ~58.99M            | ~290.19M             |
 
-Greedy approach score: **540.77M**.
-Greedy with random improvements: **544.16M**.
-The runtime is about 5-10 minutes per sample, and the python code is fully single thread and single process.
-Memory used can go up to 2.5-3GB for the biggest sample.
+
+Greedy with random improvements total score: **544.16M**.
+
+The *runtime* is about 5-10 minutes per sample, and the python code is fully single thread and single process.
+
+*Memory* used can go up to 2.5-3GB for the biggest sample (I used activity monitor on Mac OS X to view that).
 
 For information, here is the list of scores of the competion: https://hashcode.withgoogle.com/hashcode_2017.html .
 Most teams managed to get above 520M (but remember they all managed to qualify, so they are all super good)
