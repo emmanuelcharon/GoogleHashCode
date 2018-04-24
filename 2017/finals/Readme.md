@@ -1,103 +1,136 @@
 # HashCode 2017 Finals: Router placement.
 
-Code is in `finals2017.py`.
+Code is in `finals2017_routers.py`.
 
-The code here reaches a score of ~**549.46M**.
-It computes solutions in less than 5 minutes but uses a lot of caching: you can expect about 4.5GB RAM
-used for the biggest input.
+I set out to work on this problem to improve my programming and algorithmic skills. The objective was to beat the score of the best performing team of the contest: just above 548M.
 
-## Phase 1: Greedy Solution
+One of my main motivations is to get better at solving these integer programming problems. I do love the hashcode competition, because I like this type of problem and because of the short timeframe given to solve them. This allows to participate without sacrificing too much time. I've participated in a few Kaggle contests, but my experience is that the score difference between top performing teams is so thin that the final ranking is quite random, for algorithms which perform evenly (machine learning is statistical after all).
 
-I used a greedy approach for this: add routers one by one, selecting the best possible place to add
-a router at each step. The difficulty is to implement this fast and in a tractable way.
+## I - Greedy approach with basic random exploration:
 
-* compute a `gain` for each cell
-  * this is the score gain we would get by adding a router on it (-1 if wall or already router)
-  * take into account the number of backbone cells we would have to add and the associated cost
-* take the cell with the `best_gain` and add a router to it
-  * we determine which backbones we need to add to reach the new router
-  * we must remember, for each covered cell, that covering it again will not add score
-* we update the gains for cells only around the new router, in a range 2R around it.
-  * this covers all potential routers that now have a potential target already covered (big gain difference)
-  * `best_gain` is now an **approximation**: many other cell `gains` will be affected by the additional backbone cells.
-  We assume this gain difference is small and we do not compute it.
+In a limited time frame such as a few hours or one day, it is rare to be able to formulate the problem in rigorous terms and to find an optimal or provably good solution to a problem. So I started out with just common sense, and tried to come up with a good greedy solution to the problem.
 
+### A- Greedy Idea
 
-I tried to **optimize** the steps that are repeated many times:
+Here is a very simple greedy approach idea: for each potential router cell in the grid, compute the score gain if we added a router to it (and the backbone to connect it to the backbone). Choose the potential router cell with the best gain, add the corresponding backbone cells and router. Repeat this until we cannot add any router or until no router addition improves the score.
 
-* use a numpy array to store cell `gains`, because the numpy `argmax` function is faster than python loops
-* cache, for each cell, the number of routers covering it
-  * so we know if covering it adds score or not
-* cache, for each possible router position (i.e cell), the targets that would be covered
-  * this allows to compute the score gain much faster, because it saves the naive O(R^3) operations many times
-* note that because of caching, the implementation required 4.5GB of RAM for the biggest example (lets_go_higher)
+B- Implementation
 
-One operation that is repeated a lot is **finding the closest backbone cell** to a cell.
-I tried to make this function stay "local", so I go in circles around the cell, looking for a backbone cell.
-* we call this function only on cells around a new router (except initially), so we know a backbone is not too far
-* initially, when no backbone cell is added, we shortcut to the unique backbone cell (see variable `building.initialState`)
+In order to implement this idea, we need to be able to:
+* read the problem statement
+* add backbones, add routers
+* write our solution
+* find/compute the backbones required to connect a cell
+* find/compute the gain if a router is added to a cell
 
-Note: before implementing the `building.initialState` trick, I simply computed the initial gains for a sparse grid of cells.
+There are many ways to implement these requirements. My advice is to go for an object oriented approach: I used a class Building and a class Cell to represent the two main objects. I advise against implementing everything as array for speed reasons (in python for instance, you could implement every field of a cell as a numpy.array of the size of the grid): this gets confusing quickly and we can always improve performance in classes after we found a decent solution.
 
-Another operation is to find the backbones cells to add when we decided where we will add the next router.
-My function is very simple: it finds the closest backbone cell and then finds a **path going in diagonal first**,
-staring from the backbone cell.
+You can check the implementation details in routers_basic.py, in method Greedy.greedy_solve. Some implementation remarks:
 
-The results for the greedy (but carefully implemented) approach are:
+In this problem, one can see that adding a router on a cell only has an impact for the score of a nearby geographic area. However, adding a backbone cell potentially has effects on a large part of the building. So I chose to update the scores only in an area close to the newly added router, hence we the scores that do not get updated might vary a bit compared to their true value.
 
-|                          | example  | charleston_road | opera          | rue_de_londres     |    lets_go_higher    |
+One thing that accelerated the program a lot was to cache, for each potential router cell A, the set of targets that would be covered if a router was placed on A. You can also see in the code a naive O(R^4) and a linear programming approach O(R^2) to compute this set for each cell.
+
+C- Variation and random improvements:
+
+There are always possible variations on greedy methods, and in this case, we can for instance think of a way differentiate 2 router candidates that have the same score.
+I added a simple variation, which is to thake the router with maximum gain per budget used instead of simply the candidate with the best gain. This led to minor score improvements but selected solutions with more routers.
+
+In general, there is no guarantee that greedy algorithms will find a good solution (i.e. a solution with score close to the global maximum). Here is an easy and general way to improve a greedy solution (but not always possible): remove random parts of the solution, then use that as a starting point to reconstruct a greedy solution. This allows to explore neighbor solutions and usually to improve the score of the solution.
+
+This is applicable here: we will repeatedly remove about 10% of the routers (and associated backbones), and then add routers like in the simple greedy approach. See method: Greedy.greedy_solve_with_random_improvements.
+
+In order to do so, we implemented methods to:
+* remove routers, remove backbones
+* backtrack a backbone line to remove (backtrack until we find an intersection, another router or the initial backbone)
+
+This approach has the advantage of exploring the set of solutions varying all parameters: the router positions, the backbone positions, and also the number of routers used.
+
+Remark that sometimes, the remaining budget goes below 0, because the distance to backbone is approximate. This usually does not last long and the solutions become legal again after a few iterations.
+
+D- Analysing results:
+
+The results for the greedy (but carefully implemented and using ) approach are:
+
+| Greedy                   | example  | charleston_road | opera          | rue_de_londres     |    lets_go_higher    |
 | -----                    | -------- | -----           | ------         | -------            | -----------          |
-| backbone cells           | 15       |    945          |  11323         | 3043               | 23661                |
-| routers                  |  2       |    77           |  835           | 185                | 3604                 |
-| targets covered          | 54/66    | 21942/21942     |  175655/196899 | 61561/64426        | 288108/288108        |
-| targets covered 2+ times | 0        | 8385            |  5840          | 12737              | 101864               |
-| remaining budget         | 9/220    | 21262/29907     |  37/94860      | 91/21634           | 2175972/2654677      |
-| score                    | 54009    | 21963262        |  175655037     | 61561091           | 290283972            |
-| score in millions        | 0        | ~22.0M          |  ~175.6M       | ~61.6M             | ~290.3M              |
+| targets covered          | 54/66    | 21942/21942     |  171696/196899 | 57004/64426        | 288108/288108        |
+| score                    | 54 009   | 21 963 262      |  171 696 018     | 57 006 834       | 290 103 972          |
+| score in millions        | ~0.054M  | ~21.96M         |  ~171.70M      | ~57.01M            | ~290.10M             |
 
-Total score (without example): 549463362 which is about **549.46M**.
-This beats the best score of the competition (548.1M) !! https://hashcode.withgoogle.com/hashcode_2017.html .
+The results for the greedy solution transformed with 20 to 100 loops of random improvements are:
 
-Of course, I had more time and less stress than they had during the actual competition.
+| Greedy + random impr.    | example  | charleston_road | opera          | rue_de_londres     |    lets_go_higher    |
+| -----                    | -------- | -----           | ------         | -------            | -----------          |
+| targets covered          | 54/66    | 21942/21942     |  173018/196899 | 58988/64426        | 288108/288108        |
+| score                    | 54 009   | 21 962 554      |  173 018 079   | 58 988 015         | 290 194 257          |
+| score in millions        | 0        | ~21.96M         |  ~173.02M      | ~58.99M            | ~290.19M             |
 
-Note: instead of counting the number of routers on each cell, I saved a set of routers.
-I figured it did not hurt my RAM too much and that it could be useful later.
+Greedy approach score: **540.77M**.
+Greedy with random improvements: **544.16M**.
+The runtime is about 5-10 minutes per sample, and the python code is fully single thread and single process. Memory used can go up to 2.5-3GB for the biggest sample.
 
-## Phase 2: Improvement Ideas
+For information, here is the list of scores of the competion: https://hashcode.withgoogle.com/hashcode_2017.html .
+Most teams managed to get above 520M (but remember they all managed to qualify, so they are all super good) and the best team reached 548M. Our greedy approach looks ok compared to other teams scores, and would have ranked 36th. The solution with random improvements would have ranked 14th. We could run more iterations but there are diminishing returns.
 
-Now looking back at the results in the table of phase 1:
+It took me more than a day to think, code in a readable way, and run this solution. But for a team of 4 people, probably very smart (because they got qualified for the finals) and not caring about readability, it seems achievable in one day.
 
-* there are ~20,000 uncovered targets on `opera`, that is ~20M potential points (bound)
-* there are ~3,000 uncovered targets on `rue_de_londres`, that is ~3M potential points (bound)
+Note that:
+* there are about 23K uncovered targets on `opera`, that is ~23M potential points (bound)
+* there are about 5K uncovered targets on `rue_de_londres`, that is ~5M potential points (bound)
 * we covered all targets for `charleston_road` and `lets_go_higher`
-* we can holy hope to gain a few 100,000s points maximum by optimizing budget for `lets_go_higher`
+* we can holy hope to gain a few 100Ks points maximum by optimizing budget for `lets_go_higher` and `charleston_road`, so we should not focus too much on these samples.
+* running more iterations of random improvements yields diminishing score returns. However, with maybe a more optimized code and with a more powerful machine, we could have run a lot more of them and continued improving the score.
+* we could also vary the number of routers removed in each iteration: more routers removed is better for exploration, less routers removed is better for finding a local maximum. This is a simple parameter to adjust the exploration/maximisation tradeoff.
 
-**How could we improve our score?**
+Note that the greedy algorithm with random improvements is a generic meta-heuristic and can be applied to many different problems.
 
-First, once in a while, we can re-compute the actual `gains` for all cells - remember that what we cache are
-approximations. This may improve our score.
+E - Bonus: Running a lot more random improvements using multi-processing
 
+One can follow the greedy algorithm with random improvements and obtain better scores: it jsut requires to trying a lot more combinations and adjust the number of routers removed. More optimised code can use multi-processing (multi-threading is not usefull here since the bottleneck is the CPU), use GPU computations, or simply be faster depending on the programming language and implementation optimizations.
 
-The best other option seems to improve target coverage on the `opera` and `rue_de_londres` examples.
-We may find some more points if we remove some routers that have become useless,
-or which removal would us cost the least score. And then we could use the freed budget for more routers.
+Our solution is written in python 3. One must be extremely careful when multi-processing in python as there are many pitfalls one can fall into. One must remember that basically no memery is shared, and that every object passed to a new process must be fully "pickable". The best way to ensure that is to pass basic types only.
 
+In order to multi-process the random improvements, we could:
+- have each process loop infinitely, reading the solution in a text file at the beginning of every loop
+- save the "targetsCoveredIfRouter" (for all cells) in a text file, since this is what takes most time when computing initial gains.
+- when a process finds a better solution, it can save it
+- catch any concurrency read/write exception (which should be rarer and rarer when the score improves) inside the loop
 
-We used a greedy approach and we are most likely stuck in a local optimum. So in order to find more solutions,
-we can destroy routers and find other cells to put them. If we destroy one router and then greedily optimize,
-we will obtain little gains because we will stay close to the existing solution. Instead,
-we could **remove many routers simultaneously, before greedily optimising again**.
+## II - Maximum coverage problem and Steiner trees:
 
-Here are the steps we would need to implement this approach:
+### II.A - Problem decomposition
 
-* write a function to remove a router
-  * also remove corresponding backbones that were necessary only for this router
-  (basically remove them until we touch an intersection of the backbones)
-  * update local `gains`
-  * must be careful to update all affected cached values
-* maybe code a function to compute the score lost by removing a router
-* when the optimisation step gives 0 improvement, destroy many servers simultaneously
-  * for instance 10% of routers randomly selected
-  * or all routers in an area of the grid
-  * or select routers with the least decrease in score if we removed them
-* then keep optimising with the same strategy, overwrite the output file only if score improved
+Lets try and solve the problem with a different method. Consider this sub-problem, noted (A):
+
+(A) Given a fixed number of routers N, find a good solution to the original problem using exactly N routers.
+
+To solve the original problem, we will solve (A) for a few well chosen values of N and take the solution with the best score.
+
+Now, in order to solve (A), we can try to solve 2 sequential sub-problems:
+
+(A1) Place N routers without considering the backbone, so that we maximize the number of targets covered.
+
+(A2) Given the positions of N routers and the initial backbone cell, find a backbone tree that connects them minimizing the number of backbone cells created.
+
+If we manage to find a backbone tree that costs less than B - Pr * N, then we found a legal solution to the problem.
+
+Remark: suppose we find a solution to (A1), and that we do not find a legal solution to (A2). There may solutions with N routers covering less targets than the solution we find for (A1), but for which we could find a backbone tree leading to a legal solution in (A2). There are good chances that this method will miss the optimal solution, but in practice the scores for N and N+1 routers are close, and hope to gain score by better optimizing step (A1) than what we found in the greedy approach.
+
+The advantage of dividing our problem into (A1) and (A2) is that the new sub-problems look a lot more generic. And indeed, after looking for similar problems on the web, I found that **both are classic problems**:
+
+(A1) is called the *Maximum Coverage Problem*. The Wikipedia page is a good starting point to read about it: https://en.wikipedia.org/wiki/Maximum_coverage_problem .
+
+(A2) is called the *Steiner Tree problem*, https://en.wikipedia.org/wiki/Steiner_tree_problem .
+
+### II.B - Maximum Coverage Problem
+
+Coming soon.
+
+### II.C - Steiner tree with Chebyshev distance
+
+Coming soon.
+
+### II.D - Results
+
+Coming soon.
