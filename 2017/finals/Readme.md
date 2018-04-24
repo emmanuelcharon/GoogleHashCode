@@ -144,16 +144,16 @@ In order to multi-process the random improvements, we could:
 
 Lets try and solve the problem with a different method. Consider this sub-problem, noted (A):
 
-*(A) Given a fixed number of routers N, find a good solution to the original problem using exactly N routers.*
+| (A) Given a fixed number of routers N, find a good solution to the original problem using exactly N routers. |
 
 To solve the original problem, we will solve (A) for a few well chosen values of N and take the solution with the best score.
 
 Now, in order to solve (A), we can try to solve 2 sequential sub-problems:
 
-*(A1) Place N routers without considering the backbone, so that we maximize the number of targets covered.*
+| (A1) Place N routers without considering the backbone, so that we maximize the number of targets covered. |
 
-*(A2) Given the positions of N routers and the initial backbone cell, find a backbone tree that connects them
-minimizing the number of backbone cells created.*
+| (A2) Given the positions of N routers and the initial backbone cell, find a backbone tree that connects them
+minimizing the number of backbone cells created. |
 
 If we manage to find a backbone tree that costs less than B - Pr * N, then we found a legal solution to the problem.
 
