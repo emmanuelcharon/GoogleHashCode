@@ -144,27 +144,26 @@ In order to multi-process the random improvements, we could:
 
 Lets try and solve the problem with a different method. Consider this sub-problem, noted (A):
 
-| (A) Given a fixed number of routers N, find a good solution to the original problem using exactly N routers. |
 | ------------- |
+| (A) Given a fixed number of routers N, find a good solution to the original problem using exactly N routers. |
 
 To solve the original problem, we will solve (A) for a few well chosen values of N and take the solution with the best score.
 
 Now, in order to solve (A), we can try to solve 2 sequential sub-problems:
 
+| ------------- |
 | (A1) Place N routers without considering the backbone, so that we maximize the number of targets covered. |
+
 | ------------- |
-
-
 | (A2) Given the positions of N routers and the initial backbone cell, find a backbone tree that connects them minimizing the number of backbone cells created. |
-| ------------- |
 
 If we manage to find a backbone tree that costs less than B - Pr * N, then we found a legal solution to the problem.
 
-Remark: suppose we find a solution to (A1), and that we do not find a legal solution to (A2).
-There may solutions with N routers covering less targets than the solution we find for (A1),
+Remark: suppose we find a solution to (A1), and we do not find a legal solution to (A2).
+There probably are solutions with N routers covering less targets than the solution we find for (A1),
 but for which we could find a backbone tree leading to a legal solution in (A2).
 There are good chances that this method will miss the optimal solution, but in practice the scores for N and N+1
-routers are close, and hope to gain score by better optimizing step (A1) than what we found in the greedy approach.
+routers are close, and I hope to gain score by better optimizing step (A1) than what we found in the greedy approach.
 
 The advantage of dividing our problem into (A1) and (A2) is that the new sub-problems look a lot more generic.
 And indeed, after looking for similar problems on the web, I found that **both are classic problems**:
