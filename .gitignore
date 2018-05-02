@@ -20,3 +20,5 @@ venv/
 ######################
 .DS_Store
 .idea
+
+2017/finals/input/covered_targets/*.txt
