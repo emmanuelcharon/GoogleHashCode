@@ -308,7 +308,9 @@ def grand_loop(sample):
   routers_file_path = os.path.join(dir_path, "max_coverage", sample + str(max_routers) + ".txt")
 
   general_problem_building = Utils.read_problem_statement(input_file_path)
-  Utils.read_targets_covered(general_problem_building, covered_targets_file_path)
+  #Utils.read_targets_covered(general_problem_building, covered_targets_file_path)
+  general_problem_building.cache_targets_covered_if_router(verbose=True)
+
   mc_building = MCBuilding(general_problem_building)
   del general_problem_building
 

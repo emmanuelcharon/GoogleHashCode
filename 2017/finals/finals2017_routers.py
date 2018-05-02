@@ -40,7 +40,8 @@ def compute_greedy_solution_with_random_improvements(sample = "example", start_f
   visual_output_file_path = os.path.join(dir_path, "greedy_output", "visual_outputs", "visual_" + sample + ".txt")
 
   building = Utils.read_problem_statement(input_file_path)
-  Utils.read_targets_covered(building, covered_targets_file_path)
+  #Utils.read_targets_covered(building, covered_targets_file_path)
+  building.cache_targets_covered_if_router(verbose=True)
   
   if start_from_existing:
     Utils.read_solution(building, output_file_path)
@@ -270,7 +271,9 @@ def hand_managed(sample):
   
   
   building = Utils.read_problem_statement(input_file_path)
-  Utils.read_targets_covered(building, covered_targets_file_path)
+  #Utils.read_targets_covered(building, covered_targets_file_path)
+  building.cache_targets_covered_if_router(verbose=True)
+
   Utils.read_solution(building, output_file_path)
   
   
