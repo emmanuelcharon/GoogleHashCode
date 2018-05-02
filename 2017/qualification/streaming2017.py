@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import time
 
 def read_streaming_problem_statement(input_file_path):
   
@@ -86,7 +87,7 @@ class Streaming:
     self.affected_requests = None # will be a a list of lists of sets: affected requests by video v being in server s
   
   def get_total_score(self):
-    #nope : must summ all request, and also the 1000x
+    #nope : must sum all request, and also the 1000x
     total_requests = sum([request.n for request in self.requests])
     return int((self.summed_score * 1000)/total_requests)
   
@@ -180,16 +181,18 @@ class Streaming:
 
       self.videos_added += 1
       self.summed_score += best_gain
-      if self.videos_added % len(self.videos) == 0:
+      if self.videos_added % max(1, int(len(self.videos)/10)) == 0:
         print("videos added: {}, total score: {}".format(self.videos_added, self.get_total_score()))
 
 
 def main():
   dir_path = os.path.dirname(os.path.realpath(__file__))
   samples = ["example", "me_at_the_zoo", "trending_today", "videos_worth_spreading", "kittens"]
+  scores = []
   
   for sample in samples:
-    print("#####\n")
+    start_time = time.time()
+    print("\n##### {}\n".format(sample))
     input_file_path = os.path.join(dir_path, "input", sample + ".in")
     output_file_path = os.path.join(dir_path, "output", sample + ".out")
     
@@ -200,5 +203,11 @@ def main():
     
     write_streaming_solution(streaming, output_file_path)
 
+    print("{} solve time: {:.2}s".format(sample, time.time() - start_time))
+    if sample != "example":
+      scores.append(streaming.get_total_score())
+
+  print("scores: {} => {}".format(scores, sum(scores)))
+  
 if __name__=="__main__":
   main()

@@ -179,6 +179,48 @@ class Utils:
       return True
     return False
 
+  @staticmethod
+  def write_targets_covered(building, targets_covered_file_path):
+    """
+    the targets covered are a long computation which is always the same, so we save it:
+    each line is the coordinates of the cell followed by the list of coordinates of the targets it reaches,
+    space-separated. A line looks like:
+    x,y a1,b1 a2,b2, etc...
+    When a cell does not have a line, it means its targets covered set is empty.
+    
+    takes time: 40s for charleston_road, 187s for opera,
+    """
+
+    with open(targets_covered_file_path, 'w') as f:
+      for cell in building.get_all_cells_as_list():
+        if len(cell.get_targets_covered_if_router()) > 0:
+          l = list(cell.get_targets_covered_if_router())
+          l.insert(0, cell)
+          line = " ".join(["{},{}".format(target.r, target.c) for target in l])
+          f.write(line)
+          f.write("\n")
+
+  @staticmethod
+  def read_targets_covered(building, targets_covered_file_path, verbose=True):
+    if verbose:
+      print("reading targets covered file...")
+  
+    start_time = time.time()
+    
+    for x in range(0, building.H):
+      for y in range(0, building.W):
+        building.grid[x][y].targetsCoveredIfRouter = set()
+  
+    with open(targets_covered_file_path, 'r') as f:
+      for line in f:
+        l = [s.split(",") for s in line.split(" ")]
+        l = [building.grid[int(s[0])][int(s[1])] for s in l]
+        l[0].targetsCoveredIfRouter = set(l[1:])
+    
+    if verbose:
+      print("read targets covered file, took {:.2f}s".format(time.time() - start_time))
+    
+    
 class Building:
   """ represents a problem instance, as well as a solution """
   
@@ -306,13 +348,13 @@ class Building:
             if x == cell.r and y == cell.c:  # no predecessor
               cell_in_range.mark = 1
             elif x == cell.r:  # only 1 predecessor
-              if self.grid[x, y - py].mark == 0:
+              if self.grid[x][y - py].mark == 0:
                 raise ValueError("predecessor has not been marked, (x,y) = ({},{})".format(x, y))
-              cell_in_range.mark = self.grid[x, y - py].mark
+              cell_in_range.mark = self.grid[x][y - py].mark
             elif y == cell.c:  # only 1 predecessor
               if self.grid[x - px][y].mark == 0:
                 raise ValueError("predecessor has not been marked, (x,y) = ({},{})".format(x, y))
-              cell_in_range.mark = self.grid[x - px, y].mark
+              cell_in_range.mark = self.grid[x - px][y].mark
             else:  # the regular case: 2 predecessors
               if self.grid[x - px][y].mark == 0 or self.grid[x][y - py].mark == 0:
                 raise ValueError("1 or 2 predecessor(s) have not been marked, (x,y) = ({},{})".format(x, y))
@@ -388,11 +430,11 @@ class Building:
   def has_neighbor_backbone(self, cell):
     return len(self.get_neighbor_backbones(cell)) > 0
   
-  def add_backbone_to_cell(self, cell, check=True):
+  def add_backbone_to_cell(self, cell, check_neighbors=True):
     if cell.isBackbone:
       logging.warning(str(cell) + " already backbone")
       return
-    if check and not self.has_neighbor_backbone(cell):
+    if check_neighbors and not self.has_neighbor_backbone(cell):
       logging.warning(str(cell) + " no neighbor backbone")
       return
     cell.isBackbone = True
@@ -589,6 +631,15 @@ class Building:
       current_cell = next_cell
     return path
 
+  def clear_all_routers_and_backbones(self):
+    for x in range(self.H):
+      for y in range(self.W):
+        cell = self.grid[x][y]
+        if cell.hasRouter:
+          self.remove_router_from_cell(cell)
+        if cell.isBackbone and not cell.isInitialBackboneCell:
+          self.remove_backbone_from_cell(cell, check=False)
+
 class Greedy:
   
   @staticmethod
@@ -647,10 +698,6 @@ class Greedy:
     if verbose:
       print("greedy_solve")
     
-    if verbose and building.get_remaining_budget() < building.Pr:
-      print("not enough budget for even 1 router")
-      return
-
     add_router_gains = np.full((building.H, building.W), -1, dtype=float) # for each cell, gain if router is added to it
     for x in range(0, building.H):
       for y in range(0, building.W):
@@ -659,7 +706,11 @@ class Greedy:
         print("initial gains computation: row {}/{}".format(x, building.H))
     if verbose:
       print("initial gains computation ({} cells) took {:.2f}s".format(building.H*building.W, time.time()-start_time))
-
+    
+    if verbose and building.get_remaining_budget() < building.Pr:
+      print("not enough budget for even 1 router")
+      return add_router_gains
+    
     while True:
       new_router = Greedy.greedy_add_router_step(building, add_router_gains, gain_per_budget_point, verbose)
       if new_router is None:
@@ -668,16 +719,19 @@ class Greedy:
     if verbose:
       building.print_solution_info()
       print("greedy_solve took {:.2f}s".format(time.time() - start_time))
+    return add_router_gains
 
   @staticmethod
   def greedy_solve_with_random_improvements(building, output_file_path, visual_output_file_path,
-                                            num_iterations, gain_per_budget_point, verbose):
+                                            num_iterations, verbose):
     """
     when the budget is depleted, removes 10% of the routers randomly, then greedily adds routers again
     saves the solution when the score improved (does not save if the file paths are "None")
     
     if num_iterations <= 0, this will run forever and must be interrupted by hand.
     """
+    
+    gain_per_budget_point = False
     
     if verbose:
       print("greedy_solve_with_random_improvements")
@@ -707,15 +761,15 @@ class Greedy:
         building.remove_router_and_backbone_path(router)
         cells_to_update.update(building.get_cells_within_distance(router, 2 * building.R + 1))
       for cell in cells_to_update:
-        add_router_gains[cell.r, cell.c] = building.compute_gain_if_add_router_to_cell(cell)
+        add_router_gains[cell.r, cell.c] = building.compute_gain_if_add_router_to_cell(cell, gain_per_budget_point)
   
       # fill greedily
       new_router = building.grid[0][0]  # just need a not none value
       while new_router is not None:
-        new_router = Greedy.greedy_add_router_step(building, add_router_gains, gain_per_budget_point, verbose)
-        
+        new_router = Greedy.greedy_add_router_step(building, add_router_gains, gain_per_budget_point, verbose=False)
+
       # save result if improved
-      if building.get_score() > best_score:
+      if building.get_score() > best_score and building.get_remaining_budget() >= 0:
         best_score = building.get_score()
         building.print_solution_info()
         if output_file_path is not None:
@@ -726,5 +780,61 @@ class Greedy:
       iteration += 1
       if verbose:
         print("iteration {}/{} done, score: {}".format(iteration, num_iterations, building.get_score()))
-      if 0 < num_iterations < iteration:
+      if 0 < num_iterations <= iteration:
         break
+
+    print("random improvements done, now swapping until local max")
+    Greedy.swap_until_local_maximum(building, add_router_gains, gain_per_budget_point, verbose=True)
+    if building.get_score() > best_score and building.get_remaining_budget() >= 0:
+      building.print_solution_info()
+      if output_file_path is not None:
+        Utils.write_solution(building, output_file_path)
+      if visual_output_file_path is not None:
+        Utils.write_visual_solution(building, visual_output_file_path)
+
+  @staticmethod
+  def swap_until_local_maximum(building, add_router_gains, gain_per_budget_point, verbose):
+    """
+    keeping the same number of routers, swaps router positions until no router swap brings any improvement
+    
+    while any router moves:
+      for each router:
+        remove router from position
+        add router on the best spot of the grid
+    """
+    
+    routers_moved = 1
+    while routers_moved > 0:
+      routers_moved = 0
+      routers_to_move = list(building.routers)
+      
+      for router in routers_to_move:
+        
+        
+        building.remove_router_and_backbone_path(router)
+        cells_to_update = building.get_cells_within_distance(router, 2 * building.R + 1)
+        for cell in cells_to_update:
+          add_router_gains[cell.r, cell.c] = building.compute_gain_if_add_router_to_cell(cell, gain_per_budget_point)
+
+        [best_x, best_y] = np.unravel_index(add_router_gains.argmax(), add_router_gains.shape)
+        best_cell_for_router = building.grid[best_x][best_y]
+        best_approx_gain = add_router_gains[best_x, best_y]
+
+        if best_approx_gain > 0:
+          building.add_router_and_backbone_path(best_cell_for_router)
+          cells_to_update = building.get_cells_within_distance(best_cell_for_router, 2 * building.R + 1)
+          for cell in cells_to_update:
+            add_router_gains[cell.r, cell.c] = building.compute_gain_if_add_router_to_cell(cell, gain_per_budget_point)
+  
+          if best_cell_for_router is not router:
+            routers_moved += 1
+        else:
+          routers_moved += 1
+          if verbose:
+            print("router not replaced, budget: {}, score: {}".format(
+              building.get_remaining_budget(), building.get_score()))
+
+      if verbose:
+        print("swaps: {}/{} routers have moved, score: {}".format(
+          routers_moved, len(routers_to_move), building.get_score()))
+      
