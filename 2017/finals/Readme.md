@@ -229,15 +229,15 @@ I used the same approach as for the general problem:
 I focusing on `opera` and `rue_de_londres`, the results I got managed to cover:
 * for `opera`: 175975 targets using 854 routers, 176531 targets using 857 routers
 * for `rue_de_londres` 59163 targets using 189 routers, 59526 targets using 191 routers
-* see file ``maximum_coverage.py` and the folder `/max_coverage`
+* see file `maximum_coverage.py` and the folder `/max_coverage`
 
 ### II.C. Steiner tree with Chebyshev distance
 
 The Steiner tree problem (A2) is also well studied in the literature, notably the
-ESTP (Euclidian STP) and the Rectilinear STP, using different stance functions.
+ESTP (Euclidian STP) and the Rectilinear STP, using different distance functions.
 Our distance is a bit different: the Chebyshev distance is not very famous.
 
-In file `steiner_tree.py`, I considered we were trying to building a highway connecting cities,
+In file `steiner_tree.py`, I considered we were trying to build a highway connecting cities,
 with highway intersections possibly out of cities (called steiner points). It is exactly the same
 problem as connecting routers using backbone.
 
@@ -288,14 +288,13 @@ This can take a long time: number of candidates is the size of the grid,
 the MST computation for each candidate is O(n^2) where n = number of cities
 (there will not be more useful Steiner points than cities), and we will have n iterations.
 
-Improvements include:
+A lot of improvements are mentioned in article *Closing the Gap: Near-Optimal
+Steiner Trees in Polynomial Time*. They include:
 * at several candidates in each iteration if they seem "independent"
 * restrict the number of candidates using "Hannan" candidates
-* compute the candidate scores in O(n) time using geometric properties and dynamic MST maintenance
+* compute the candidate scores in O(n) time using geometric properties and dynamic MST maintenance.
 This reduced the cost of each iteration to about O(n^3) and there are usually less than 5 iterations.
 
-Details and explanations are in article "Closing the Gap: Near-Optimal
-Steiner Trees in Polynomial Time" (see literature folder).
 Remark than with our problem we have a different distance function:
 for the geometric considerations, I simply used 8 quadrant instead of 4.
 
@@ -354,9 +353,9 @@ Here are the final results, corresponding to files in folder `two_step_outputs`:
 | num backbone cells    | 11       | 812             |  9160          | 2581               | 21486                |
 | score in millions     | 0        | ~21.96M         |  ~176.37M      | ~59.50M            | ~290.24M             |
 
-I stopped when my final score go to: 548079795 = **548.08M**.
+I stopped when my score reached: 548079795 = **548.08M**.
 This was just enough to beat the best score of the competition.
 
 If you worked on the problem, I hope this helped. Make sure to read the
-references found in the literature folder. If you want to talk about it,
-just open an issue on my repo.
+references found in the literature folder. If you want to talk about it
+with me, just open an issue on this repo.
