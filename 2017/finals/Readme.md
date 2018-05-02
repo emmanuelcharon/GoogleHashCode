@@ -354,7 +354,8 @@ Here are the final results, corresponding to files in folder `two_step_outputs`:
 | score in millions     | 0        | ~21.96M         |  ~176.37M      | ~59.50M            | ~290.24M             |
 
 I stopped when my score reached: 548079795 = **548.08M**.
-This was just enough to beat the best score of the competition.
+This was just enough to beat the best score of the competition (but remember:
+they all made it in 1 day).
 
 If you worked on the problem, I hope this helped. Make sure to read the
 references found in the literature folder. If you want to talk about it
