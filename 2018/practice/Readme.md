@@ -13,7 +13,7 @@ The problem statement, input and output files are joined. The scores for the out
 
 
 The total score without counting the example is **940928**. The program can read solutions to the problem and improve
-them greedily (but not a lot).??
+them greedily (but not a lot).
 
 ## Algorithm
 
