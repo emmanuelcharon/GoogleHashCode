@@ -8,7 +8,6 @@ Python 3.6.4
 import os
 import numpy as np
 import random
-import math
 
 def read_pizza(input_file_path):
   """ read input file and return a pizza (which is a problem statement instance) """
@@ -37,6 +36,15 @@ def write_solution(pizza, output_file_path):
       f.write("{} {} {} {}".format(s.fromX, s.fromY, s.toX, s.toY))
       f.write("\n")
 
+def write_visual_solution(pizza, visual_output_file_path):
+  with open(visual_output_file_path, 'w') as f:
+    for r in range(pizza.R):
+      for c in range(pizza.C):
+        if pizza.grid[r][c].currentSlice:
+          f.write(".")
+        else:
+          f.write("T" if pizza.grid[r][c].isTomato else "M")
+      f.write("\n")
 
 def read_slices(solution_file_path):
   slices = []
@@ -54,7 +62,7 @@ def read_slices(solution_file_path):
         slices.append(s)
       line_count += 1
   if num_slices != len(slices):
-    print("error: inconsistent solution file {}".format(solution_file_path))
+    raise ValueError("inconsistent solution file {}".format(solution_file_path))
   
   return slices
   
@@ -126,8 +134,7 @@ class Pizza:
     """
 
     if self.grid[fromX][y].currentSlice:
-      print("error: must call this function on a free cell")
-      return None
+      raise ValueError("must call this function on a free cell")
     
     result = fromX
     
@@ -159,9 +166,8 @@ class Pizza:
     """
     
     if self.has_used_cell(fromX, toX, fromY, fromY):
-      print("error: must call this function on a free column")
-      return None
-
+      raise ValueError("must call this function on a free column")
+      
     result = fromY
     
     while True:
@@ -193,8 +199,7 @@ class Pizza:
     """
     
     if cell.currentSlice:
-      print("error: cell is already in a slice")
-      return None
+      raise ValueError("cell is already in a slice")
     
     best_legal_slice = None
     best_area = 0
@@ -222,8 +227,7 @@ class Pizza:
       # s is now the largest "free" slice of height toX-fromX
       # check area again, to be sure
       if s.area > self.H:
-        print("error: slice too big")
-        return None
+        raise ValueError("slice too big")
 
       # check that it contains enough mushrooms and tomatoes
       [num_mushrooms, num_tomatoes] = self.count_mushrooms_tomatoes_in_slice(s)
@@ -255,13 +259,11 @@ class Pizza:
     
     start_cell = self.grid[s.fromX][s.fromY]
     if start_cell.bestPotentialSlice:
-      print("error: must remove start_cell's potential slice first")
-      return
-
+      raise ValueError("must remove start_cell's potential slice first")
+      
     # check that all cells in this slice are available
     if self.has_used_cell(s.fromX, s.toX, s.fromY, s.toY):
-      print("error: when adding a potential slice, it must be on empty cells")
-      return
+      raise ValueError("when adding a potential slice, it must be on empty cells")
     
     start_cell.bestPotentialSlice = s
   
@@ -271,8 +273,7 @@ class Pizza:
   def add_actual_slice(self, s):
     # check that all cells in this slice are available
     if self.has_used_cell(s.fromX, s.toX, s.fromY, s.toY):
-      print("error: a cell is already in a slice")
-      return
+      raise ValueError("a cell is already in a slice")
 
     for cell in self.list_cells_in_slice(s):
       cell.currentSlice = s
@@ -283,11 +284,9 @@ class Pizza:
     # check that all cells in this slice were using it as current slice
     for cell in self.list_cells_in_slice(s):
       if cell.currentSlice != s:
-        print("error: a cell was not using this as currentSlice")
-        return
+        raise ValueError("a cell was not using this as currentSlice")
     if s not in self.slices:
-      print("error: slice is not in the pizza slices list")
-      return
+      raise ValueError("slice is not in the pizza slices list")
   
     for cell in self.list_cells_in_slice(s):
       cell.currentSlice = None
@@ -415,6 +414,193 @@ class Pizza:
         else:
           gains[cell.r, cell.c] = self.score_for_unavailable
 
+  def enumerate_shapes(self):
+    """ enumerates all the possible slice shapes (rectangles, no rotation): [height, width]
+        it is all the rectangle shapes with area between 2L and H inclusive
+    """
+    result = list()
+    for num_rows in range(1, self.H + 1):
+      for num_columns in range(1, self.H + 1):
+        if 2 * self.L <= num_rows * num_columns <= self.H:
+          result.append([num_rows, num_columns])
+    return result
+  
+  
+  def potential_slice_spot(self, cell, cells_set, height, width):
+    """ given a cell, tells if a slice of (height,width) respects:
+    * stays within pizza bounds
+    * all cells in the slice are in the set
+    * the resulting slice has enough mushrooms and tomatoes and is not too big
+    
+    if True, returns the list of cells in this shape,
+    else returns None
+    
+    """
+    if height*width > self.H:
+      return False
+    num_tomatoes, num_mushrooms = 0, 0
+    for x in range(cell.r, cell.r + height):
+      for y in range(cell.c, cell.c + width):
+        if x < 0 or x >= self.R or y < 0 or y >= self.C:
+          return False
+        other_cell = self.grid[x][y]
+        if other_cell not in cells_set:
+          return False
+        if other_cell.isTomato:
+          num_tomatoes += 1
+        else:
+          num_mushrooms += 1
+    return num_tomatoes >= self.L and num_mushrooms >= self.L
+
+  def get_cells_set_in_slice_spot(self, cell, height, width):
+    result = set()
+    for x in range(cell.r, cell.r + height):
+      for y in range(cell.c, cell.c + width):
+        result.add(self.grid[x][y])
+    return result
+
+  def optimal_score(self, cells_set, shapes, depth=0):
+    """
+    given a set of cells, computes all the possible ways to fill it up with with shapes,
+    and returns the best score along with the corresponding slices
+    * shapes must stay inside cells_set
+    * recursive (long) but not memory consuming: stack of maximum [size(cells_set)/max_shape_area] calls
+    * does not look at current pizza state (works any time)
+    """
+    
+    if len(cells_set) > 4*self.H:
+      print("WARNING: calling optimal_score with a big set. We recommend less than 4*H")
+    
+    # for each cell in the set, try to position each shape there, and recursively compute score
+    best_score = 0
+    best_slices = list()
+    
+    for cell in cells_set:
+      for shape in shapes:
+        if self.potential_slice_spot(cell, cells_set, shape[0], shape[1]):
+          slice_set = self.get_cells_set_in_slice_spot(cell, shape[0], shape[1])
+          cells_left = set([c for c in cells_set if c not in slice_set])
+          
+          score, slices = self.optimal_score(cells_left, shapes, depth=depth+1)
+          
+          score += shape[0]*shape[1]
+          slices.append(Slice(cell.r, cell.r+shape[0]-1, cell.c, cell.c+shape[1]-1))
+
+          
+          if score > best_score:
+            best_score = score
+            best_slices = slices
+
+            #if depth <= 0:
+            #  print("(depth= {}) score {} with {} slices: {}".format(depth, score, len(slices), slices))
+            
+            if best_score == len(cells_set): # terminate early because we found a solution covering the full set
+              return best_score, best_slices
+            
+    return best_score, best_slices
+  
+  
+  def get_neighbors(self, cell):
+    result = list()
+    if cell.c + 1 < self.C:
+      result.append(self.grid[cell.r][cell.c + 1])
+    if cell.r - 1 >= 0:
+      result.append(self.grid[cell.r - 1][cell.c])
+    if cell.c - 1 >= 0:
+      result.append(self.grid[cell.r][cell.c - 1])
+    if cell.r + 1 < self.R:
+      result.append(self.grid[cell.r + 1][cell.c])
+    return result
+
+  def find_available_connected_set(self, available_cell, size_limit=-1):
+    # a simple BFS on available_cell, 4 neighbors per cell
+    if available_cell.currentSlice:
+      raise ValueError("use only on an available cell")
+    
+    cells_stack = [available_cell]
+    visited = set()
+    while len(cells_stack) > 0:
+      cell = cells_stack.pop(0)
+      visited.add(cell)
+      if 0 <= size_limit <= len(visited):
+        break
+      for neighbor in self.get_neighbors(cell):
+        if neighbor not in visited and not neighbor.currentSlice:
+          cells_stack.append(neighbor)
+      
+    return visited
+    
+  def local_optimal_moves(self):
+    if self.score == 0:
+      raise ValueError("do not do this on empty solution")
+    
+    shapes = self.enumerate_shapes()
+    
+    for x in range(self.R):
+      print("row {}/{}".format(x, self.R))
+      for y in range(self.C):
+        
+        if not self.grid[x][y].currentSlice:
+          
+          # this cell has no slice, find the connected set of available cells around it (connected = ortho neighbors)
+          # then for each neighbor slice of this set, compute the optimal score on
+          # the union of slice area + connected available set
+          # (limit the union to size 3*H for num_shapes = 19 or 4*H for num_shapes = 12)
+          # perform the best move (if better than doing nothing)
+          # in a second pass, we can try removing pairs of adjacent neighbors
+
+          connected_set = self.find_available_connected_set(self.grid[x][y], size_limit=3*self.H)
+          
+          neighbor_slices = set()
+          for cell in connected_set:
+            for neighbor in self.get_neighbors(cell):
+              if neighbor.currentSlice:
+                neighbor_slices.add(neighbor.currentSlice)
+          
+          best_score, best_replacing_slices = self.optimal_score(connected_set, shapes) # probably 0
+          best_ns = None
+          if best_score > 0:
+            print("gain without removal: {}".format(best_score))
+          
+          for ns in neighbor_slices:
+            ns_set = set(self.list_cells_in_slice(ns))
+            ns_set.update(connected_set)
+            ns_score, ns_slices = self.optimal_score(ns_set, shapes)
+            
+            if ns_score > best_score:
+              best_score = ns_score
+              best_ns = ns
+              best_replacing_slices = ns_slices
+          
+          if best_score > 0:
+            if not best_ns:
+              for s in best_replacing_slices:
+                self.add_actual_slice(s)
+            elif best_score > best_ns.area: # better to do the move than to do nothing
+              self.remove_actual_slice(best_ns)
+              for s in best_replacing_slices:
+                self.add_actual_slice(s)
+            
+              print("score: {}".format(self.score))
+
+    print("final score: {}".format(self.score))
+
+  def incremental_optimal_local_moves(self):
+    shapes = self.enumerate_shapes()
+    
+    h = self.H
+    w = 3
+    
+    for x in range(0, self.R, h):
+      print("row {}/{}, score: {}".format(x, self.R, self.score))
+      for y in range(0, self.C, w):
+        
+          cells = set([self.grid[i][j] for i in range(x, x+h) for j in range(y, y+w) if 0 <= j < self.C if 0 <= i < self.R])
+          score, slices = self.optimal_score(cells, shapes)
+          for s in slices:
+            self.add_actual_slice(s)
+    print("final score: {}".format(self.score))
+
 
 def main(solve = True, start_from_existing_solution = True, optimize_steps = 0):
   """
@@ -432,7 +618,8 @@ def main(solve = True, start_from_existing_solution = True, optimize_steps = 0):
     print("\n##### " + sample)
     input_file_path = os.path.join(dir_path, "input", sample + ".in")
     output_file_path = os.path.join(dir_path, "output", sample + ".out")
-    
+    visual_output_file_path = os.path.join(dir_path, "visual_output", sample + ".out")
+
     pizza = read_pizza(input_file_path)
     if start_from_existing_solution:
       [pizza.add_actual_slice(s) for s in read_slices(output_file_path)]
@@ -452,14 +639,47 @@ def main(solve = True, start_from_existing_solution = True, optimize_steps = 0):
     print("average slice width:{}, height:{}".format(sum(slice_widths)/len(slice_widths), sum(slice_heights)/len(slice_heights)))
 
     write_solution(pizza, output_file_path)
+    write_visual_solution(pizza, visual_output_file_path)
 
     if sample != "example":
       scores.append(pizza.score)
     
   print("\n#####\nscores: {} => total score (without 'example') = {}".format(scores, sum(scores)))
+
+
+def test():
+  dir_path = os.path.dirname(os.path.realpath(__file__))
+  samples = ["big"] #["example", "small", "medium", "big"]
   
+  for sample in samples:
+    print("\n##### " + sample)
+    input_file_path = os.path.join(dir_path, "input", sample + ".in")
+    output_file_path = os.path.join(dir_path, "output2", sample + ".out")
+    visual_output_file_path = os.path.join(dir_path, "visual_output2", sample + ".out")
+
+    pizza = read_pizza(input_file_path)
+   # [pizza.add_actual_slice(s) for s in read_slices(output_file_path)]
+   # print("read solution with {} slices and score is {}".format(len(pizza.slices), pizza.score))
+
+    #shapes = pizza.enumerate_shapes()
+    #print("L={}, H={}, shapes: {}".format(pizza.L, pizza.H, len(shapes)))
+    #print(shapes)
+    
+    #cells_set = set()
+    #for x in range(0, min(pizza.R, 14)):
+    #  for y in range(0, min(pizza.C, 5)):
+    #    cells_set.add(pizza.grid[x][y])
+    #o = pizza.optimal_score(cells_set, shapes)
+    #print(o)
+
+    pizza.incremental_optimal_local_moves()
+    write_solution(pizza, output_file_path)
+    write_visual_solution(pizza, visual_output_file_path)
+
 if __name__ == "__main__":
   random.seed(17) # reproducibility
   # main(solve=True, start_from_existing_solution=False, optimize_steps=0)  # compute solutions
-  main(solve=False, start_from_existing_solution=True, optimize_steps=0) # read solutions
+  #main(solve=False, start_from_existing_solution=True, optimize_steps=0) # read solutions
+  test()
+  
   
