@@ -1,0 +1,27 @@
+2026-11-04 baseline greedy (no SA) charleston_road=21961453 lets_go_higher=288384627 opera=105798061 rue_de_londres=50254072 TOTAL=466398213 | v1 ratio greedy
+2026-11-04 18:22 secs=10 charleston_road=21962097 lets_go_higher=290168007 opera=174696096 rue_de_londres=58913017 TOTAL=545739217 | greedy dist-fix + SA local moves 5 rounds
+2026-11-04 18:23 secs=10 charleston_road=21963045 lets_go_higher=290172242 opera=174948030 rue_de_londres=59078021 TOTAL=546161338 | teleport moves + prune + final hill-climb
+2026-11-04 18:28 secs=10 charleston_road=21962952 lets_go_higher=290168007 opera=175057023 rue_de_londres=59197026 TOTAL=546385008 | staircase coverage + backbone NN penalty lambda=0.7
+2026-11-04 18:30 secs=10 charleston_road=21963171 lets_go_higher=290168007 opera=175056010 rue_de_londres=59288018 TOTAL=546475206 | 16 parallel SA chains per round
+2026-11-04 18:34 secs=60 charleston_road=21963092 lets_go_higher=290168007 opera=176095029 rue_de_londres=59364025 TOTAL=547590153 | 16 parallel SA chains, 60s per dataset
+2026-11-04 18:41 secs=60 charleston_road=21963084 lets_go_higher=290249237 opera=176186021 rue_de_londres=59344004 BEST_TOTAL=547762388 | auto lambda (0 when greedy covers all) + keep-best outputs
+2026-11-04 19:21 secs=60 charleston_road=21963213 lets_go_higher=290248657 opera=177788005 rue_de_londres=59839032 BEST_TOTAL=549839487 | guided paths + key-path exchange Steiner search in complete()
+2026-11-04 19:28 secs=90 charleston_road=21963213 lets_go_higher=290274267 opera=178095011 rue_de_londres=59848022 BEST_TOTAL=550180513 | lambda 0.3, seeded from saved best outputs
+2026-11-04 19:34 secs=120 charleston_road=21963213 lets_go_higher=290281892 opera=178188001 rue_de_londres=59848022 BEST_TOTAL=550281128 | seeded continuation run
+2026-11-05 12:29 secs=120 charleston_road=21963223 lets_go_higher=290285042 opera=178439066 rue_de_londres=59848048 BEST_TOTAL=550535379 | key-vertex elimination (Uchoa-Werneck) added to tree search, seeded
+2026-11-05 12:37 secs=180 charleston_road=21963246 lets_go_higher=290291227 opera=178756023 rue_de_londres=59861074 BEST_TOTAL=550871570 | tree ILS polish stage (window rip-up + reconnect + KPE/KVE) + drop routers on full maps, seeded
+2026-11-05 13:07 secs=480 charleston_road=21963247 lets_go_higher=290299807 opera=178770041 rue_de_londres=59867083 BEST_TOTAL=550900178 | reuse best tree in complete() + polish each round's best candidate, seeded
+2026-11-05 14:41 charleston_road=21963248 | GeoSteiner exact tree on rotated points, mapped to grid + polish (tools/geosteiner_tree.py)
+2026-11-05 14:47 opera=178773041 | window max-coverage ILP (HiGHS via scipy), lambda=0, tools/window_ilp.py
+2026-11-05 14:57 opera=178781027 | window max-coverage ILP (tools/window_ilp.py, LAMBDA=0)
+2026-11-05 15:10 rue_de_londres=59876051 | window max-coverage ILP (tools/window_ilp.py, LAMBDA=0)
+2026-11-05 15:21 opera=178831013 | window ILP, bigger windows (WIN 32-55)
+2026-11-05 15:21 rue_de_londres=59899045 | window ILP, bigger windows (WIN 28-45)
+2026-11-05 15:33 opera=178840007 | window ILP, bigger windows (WIN 32-55)
+2026-11-05 15:33 BEST_TOTAL=551002107 | after window max-coverage ILP runs on opera and rue
+2026-11-05 16:02 opera=178854010 | window max-coverage ILP in Rust (highs crate), WILP mode
+2026-11-05 16:03 BEST_TOTAL=551016110 | window ILP moved into Rust (highs crate)
+2026-11-05 16:18 opera=178877005 | Rust window ILP, 5 min
+2026-11-05 16:26 opera=178877008 | Rust window ILP, windows of 10-60 routers
+2026-11-05 16:32 opera=178880002 | Rust window ILP, all cores busy
+2026-11-05 16:32 BEST_TOTAL=551042102 | Rust window ILP runs (async workers)
