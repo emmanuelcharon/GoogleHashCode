@@ -1,0 +1,13 @@
+[package]
+name = "solver"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+highs = "2.4.0"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+debug = false
