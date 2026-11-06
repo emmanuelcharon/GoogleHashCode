@@ -1,12 +1,12 @@
 # HashCode 2017 Finals: Router placement, revisited with Claude (Nov 4-5, 2026)
 
-In 2017 I worked on this problem on my own, in Python, and stopped at **548.08M**, just above the best team of the
-contest. In 2026 I took the problem again, this time working with Claude Opus 5.5 (High), Anthropic's model, in
+In 2017 I worked on this problem on my own, in Python, and stopped after a couple of weeks at **548.08M**, just above
+the best team of the 1-day contest (AIM Tech, 548.07M; see the [final standings](https://cphof.org/standings/hashcode/2017)). In 2026 I took the problem again, this time working with Claude Opus 5.5 (High), Anthropic's model, in
 Claude Code. I spent a few hours on it over two days. I mostly gave directions, pointed to my 2017 repo and its
 literature, and asked questions; Claude wrote and ran the code.
 
 The steps were roughly:
-* a small validator/scorer in Python : I wanted a readable, independant thing to check score and correctness)
+* a small validator/scorer in Python : I wanted a readable, independant thing to check score and correctness
 * a solver in Rust : this seems the most efficient and AI-coding Agent friendly language at the moment
 * Claude quickly found a greedy approach plus simulated annealing: **547.8M**
 * After pointing it to ideas from my 2017 work and from the Steiner tree literature: **550.3M**, then **550.9M**;
@@ -55,7 +55,7 @@ This is what took me from 550.9M to 551M, and it is close to the decomposition I
 maximum coverage problem, then (A2) the Steiner tree problem. Back then I tried to solve (A1) for the whole map at once,
 and the result was too rigid to connect well.
 
-Here, instead of solving the whole problem in two big steps, every step takes a **subset**:
+Here, instead of solving the whole problem in two big steps, Claude proposed that every step takes a subset :
 * choose a random rectangle around a router (up to ~40 routers inside);
 * freeze everything outside it;
 * find the **optimal** placement of the same number of routers inside, i.e. the one covering the most targets that
