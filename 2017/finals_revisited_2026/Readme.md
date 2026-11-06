@@ -6,7 +6,7 @@ Claude Code. I spent a few hours on it over two days. I mostly gave directions, 
 literature, and asked questions; Claude wrote and ran the code.
 
 The steps were roughly:
-* a small validator/scorer in Python : I wanted a readable, independant thing to check score and correctness)
+* a small validator/scorer in Python : I wanted a readable, independant thing to check score and correctness
 * a solver in Rust : this seems the most efficient and AI-coding Agent friendly language at the moment
 * Claude quickly found a greedy approach plus simulated annealing: **547.8M**
 * After pointing it to ideas from my 2017 work and from the Steiner tree literature: **550.3M**, then **550.9M**;
@@ -55,7 +55,7 @@ This is what took me from 550.9M to 551M, and it is close to the decomposition I
 maximum coverage problem, then (A2) the Steiner tree problem. Back then I tried to solve (A1) for the whole map at once,
 and the result was too rigid to connect well.
 
-Here, instead of solving the whole problem in two big steps, every step takes a **subset**:
+Here, instead of solving the whole problem in two big steps, Claude proposed that every step takes a subset :
 * choose a random rectangle around a router (up to ~40 routers inside);
 * freeze everything outside it;
 * find the **optimal** placement of the same number of routers inside, i.e. the one covering the most targets that
